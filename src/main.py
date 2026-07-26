@@ -14,6 +14,11 @@ import time
 PIN_DT = 5
 PIN_SCK = 18
 
+hx = HX711(
+    dout=Pin(PIN_DT),
+    pd_sck=Pin(PIN_SCK)
+)
+
 # Limites do sistema (gramas)
 PESO_CAIXA_CHEIA = 5000
 LIMITE_CRITICO = 150
