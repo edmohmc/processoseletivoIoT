@@ -2,6 +2,7 @@
 Monitor de Estoque Kanban Inteligente
 ESP32 + HX711
 """
+
 from machine import Pin
 from hx711 import HX711
 import time
