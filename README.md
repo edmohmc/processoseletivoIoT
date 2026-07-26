@@ -272,73 +272,161 @@ Preencha todas as seções abaixo de forma **clara, objetiva e técnica**.
 
 ---
 
-### Identificação do Candidato
+# Identificação do Candidato
 
-- **Nome completo:**
-- **GitHub:**
-
----
-
-## Visão Geral da Solução
-
-Descreva, em poucas palavras:
-
-- Qual é o objetivo do seu projeto
-- O que o sistema embarcado simulado faz
-- Como o usuário interage com ele (se aplicável)
+* **Nome completo:** Edmo Henrique Martins Cavalcante
+* **GitHub:** https://github.com/edmohmc
 
 ---
 
-## Arquitetura do Sistema Embarcado
+# Visão Geral da Solução
 
-Explique a arquitetura lógica do seu projeto, abordando:
+O projeto tem como objetivo desenvolver um sistema embarcado para monitoramento inteligente de estoque utilizando o conceito Kanban, por meio da leitura contínua do peso de uma caixa de componentes.
 
-- Fluxo principal do programa (`main.py`)
-- Estrutura de estados, loops ou temporizações
-- Como os componentes interagem entre si
+A solução utiliza um ESP32 em conjunto com um sensor de peso HX711 para identificar automaticamente o estado do estoque. Com base na leitura do peso, o sistema classifica a situação em quatro estados: funcionamento normal, estoque crítico, caixa reabastecida e falha de leitura do sensor.
 
-Se desejar, utilize tópicos ou um pequeno diagrama em texto.
+A interação com o usuário ocorre através do monitor serial, onde são exibidas mensagens informando o status do estoque, alertas de reposição e possíveis falhas de operação.
 
 ---
 
-## Componentes Utilizados na Simulação
+# Arquitetura do Sistema Embarcado
 
-Liste os principais componentes definidos no `diagram.json`, por exemplo:
+O firmware foi desenvolvido em MicroPython utilizando uma arquitetura simples, baseada em inicialização do hardware seguida por um laço principal de monitoramento contínuo.
 
-- Tipo de placa utilizada
-- LEDs, botões, sensores, atuadores, etc.
-- Função de cada componente no sistema
+## Fluxo principal
+
+1. Inicialização do ESP32.
+2. Configuração dos pinos GPIO do sensor HX711.
+3. Tentativa de execução da tara do sensor.
+4. Exibição da mensagem de inicialização.
+5. Entrada em um loop infinito para monitoramento do peso.
+
+Durante cada iteração do loop:
+
+* é realizada uma leitura do sensor HX711;
+* o valor recebido é validado;
+* o peso é comparado com os limites definidos;
+* o estado do estoque é atualizado;
+* uma mensagem é enviada ao monitor serial quando ocorre mudança de estado.
+
+Foi utilizado um pequeno atraso de 100 ms entre as leituras para reduzir o uso da CPU sem comprometer a resposta do sistema.
+
+### Fluxo lógico
+
+```text
+Inicialização
+      │
+      ▼
+Configuração do HX711
+      │
+      ▼
+Leitura do Peso
+      │
+      ▼
+┌──────── Peso = 0 ? ─────────┐
+│            Sim              │
+│      Alerta de erro         │
+└────────────┬────────────────┘
+             │Não
+             ▼
+ Peso ≤ 150 g ?
+      │
+ ┌────┴────┐
+ │   Sim   │
+ │Repor caixa
+ └────┬────┘
+      │Não
+      ▼
+ Peso ≥ 5000 g
+ e reposição ativa?
+      │
+ ┌────┴────┐
+ │   Sim   │
+ │Abastecimento
+ └────┬────┘
+      │Não
+      ▼
+Estoque Regular
+      │
+      ▼
+Nova leitura
+```
 
 ---
 
-## Decisões Técnicas Relevantes
+# Componentes Utilizados na Simulação
 
-Explique brevemente decisões importantes tomadas durante o desenvolvimento, como:
+O circuito desenvolvido no Wokwi é composto pelos seguintes componentes:
 
-- Organização do código
-- Uso de funções, estados ou constantes
-- Estratégias para temporização ou controle lógico
+* **ESP32 DevKit C v4**
+
+  * Microcontrolador responsável pela execução do firmware.
+
+* **Sensor de peso HX711**
+
+  * Responsável pela leitura da carga aplicada à célula de carga simulada.
+
+* **Monitor Serial**
+
+  * Utilizado para exibição das mensagens de status e validação automática pela esteira de testes.
+
+### Conexões principais
+
+| Componente | GPIO ESP32 |
+| ---------- | ---------- |
+| HX711 DT   | GPIO 5     |
+| HX711 SCK  | GPIO 18    |
+| HX711 VCC  | 3.3 V      |
+| HX711 GND  | GND        |
 
 ---
 
-## Resultados Obtidos
+# Decisões Técnicas Relevantes
 
-Descreva o comportamento final do sistema:
+Durante o desenvolvimento foram adotadas algumas decisões visando simplicidade, robustez e facilidade de manutenção.
 
-- O que funciona corretamente
-- Quais requisitos foram atendidos
-- Resultado observado na simulação do Wokwi
+* Organização do código em blocos bem definidos (configuração, inicialização, funções e loop principal).
+* Utilização de constantes para todos os limites de peso, facilitando futuras alterações.
+* Implementação da função `ler_peso()` para encapsular a leitura do HX711 e tratar possíveis exceções.
+* Tratamento de valores negativos retornando zero, evitando leituras inválidas.
+* Utilização de uma variável de controle (`reposicao_disparada`) para impedir múltiplos disparos consecutivos do evento de reposição.
+* Uso da variável `ultima_mensagem` para evitar repetição contínua das mesmas mensagens no monitor serial.
+* Adoção de um pequeno atraso (`time.sleep_ms(100)`) para reduzir o consumo de processamento mantendo o sistema responsivo.
 
 ---
 
-## Comentários Adicionais (Opcional)
+# Resultados Obtidos
 
-Utilize este espaço para comentar, se desejar:
+O sistema desenvolvido atende aos requisitos propostos para o desafio.
 
-- Dificuldades encontradas
-- Limitações da solução
-- Melhorias que você faria com mais tempo
-- Principais aprendizados durante o desafio
+Na simulação foi possível observar corretamente:
+
+* inicialização do sistema;
+* monitoramento contínuo do peso;
+* identificação do estado de estoque regular;
+* detecção automática de estoque crítico;
+* disparo único do evento de reposição;
+* reconhecimento do reabastecimento da caixa;
+* identificação de falha de leitura ou ausência da caixa quando o peso é igual a zero.
+
+As mensagens enviadas ao monitor serial seguem exatamente o formato especificado pelo desafio, permitindo compatibilidade com a validação automática da esteira de integração contínua (Wokwi CI).
+
+---
+
+# Comentários Adicionais
+
+O desenvolvimento deste projeto permitiu aplicar conceitos de sistemas embarcados utilizando MicroPython, sensores digitais e simulação em ambiente Wokwi.
+
+Como melhoria futura, seria interessante implementar:
+
+* indicadores visuais utilizando LEDs;
+* sinalização sonora através de buzzer;
+* envio dos dados para uma plataforma IoT via Wi-Fi (MQTT ou HTTP);
+* registro histórico das medições;
+* interface web para acompanhamento remoto do estoque.
+
+O projeto demonstrou a importância da organização do firmware, do tratamento adequado de exceções e da implementação de lógica não bloqueante para garantir compatibilidade com testes automatizados.
+
 
 ---
 
