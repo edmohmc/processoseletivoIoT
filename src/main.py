@@ -16,15 +16,14 @@ import time
 PIN_DT = 5
 PIN_SCK = 18
 
-hx = HX711(
-    dout=Pin(PIN_DT),
-    pd_sck=Pin(PIN_SCK)
-)
-
 # Limites do sistema (gramas)
 PESO_CAIXA_CHEIA = 5000
 LIMITE_CRITICO = 150
 PESO_ERRO = 0
+
+# O simulador Wokwi expõe a carga em contagens brutas. Para este cenário,
+# 5000g correspondem a aproximadamente 2100000 contagens.
+FATOR_ESCALA_GRAMAS = 420
 
 # =====================================================
 # Inicialização do sensor HX711
@@ -34,12 +33,6 @@ hx = HX711(
     dout=Pin(PIN_DT),
     pd_sck=Pin(PIN_SCK)
 )
-
-# Caso a biblioteca possua função de tara, executa-a
-try:
-    hx.tare()
-except Exception:
-    pass
 
 # Mensagem obrigatória do projeto
 print("Sistema Kanban Inicializado")
@@ -55,14 +48,28 @@ ultima_mensagem = ""
 # Função para leitura do peso
 # =====================================================
 
+def converter_raw_para_gramas(leitura_raw):
+    """Converte a leitura bruta do HX711 em gramas para o cenário Wokwi."""
+
+    if leitura_raw is None:
+        return 0
+
+    leitura_raw = int(leitura_raw)
+
+    if leitura_raw < 0:
+        leitura_raw = 0
+
+    return int(round(leitura_raw / FATOR_ESCALA_GRAMAS))
+
+
 def ler_peso():
     """
-    Realiza a leitura do HX711.
+    Realiza a leitura do HX711 e converte para gramas.
     Caso ocorra algum erro, retorna zero.
     """
 
     try:
-        peso = int(hx.read())
+        peso = converter_raw_para_gramas(hx.read())
 
         if peso < 0:
             peso = 0
