@@ -281,103 +281,55 @@ Preencha todas as seções abaixo de forma **clara, objetiva e técnica**.
 
 # Visão Geral da Solução
 
-O projeto tem como objetivo desenvolver um sistema embarcado para monitoramento inteligente de estoque utilizando o conceito Kanban, por meio da leitura contínua do peso de uma caixa de componentes.
+O projeto consiste em um sistema embarcado para monitoramento inteligente de estoque utilizando o conceito Kanban, empregando um ESP32 e um sensor de peso HX711. A solução realiza a leitura contínua do peso de uma caixa de componentes e identifica automaticamente seu estado operacional.
 
-A solução utiliza um ESP32 em conjunto com um sensor de peso HX711 para identificar automaticamente o estado do estoque. Com base na leitura do peso, o sistema classifica a situação em quatro estados: funcionamento normal, estoque crítico, caixa reabastecida e falha de leitura do sensor.
-
-A interação com o usuário ocorre através do monitor serial, onde são exibidas mensagens informando o status do estoque, alertas de reposição e possíveis falhas de operação.
+Com base no valor medido, o sistema informa se o estoque está em condição normal, se atingiu o nível crítico para reposição, se houve reabastecimento da caixa ou se ocorreu uma falha de leitura do sensor. Todas as informações são disponibilizadas por meio da interface serial, permitindo integração com a esteira de testes automatizados do Wokwi.
 
 ---
 
 # Arquitetura do Sistema Embarcado
 
-O firmware foi desenvolvido em MicroPython utilizando uma arquitetura simples, baseada em inicialização do hardware seguida por um laço principal de monitoramento contínuo.
+O firmware foi desenvolvido em MicroPython seguindo uma arquitetura simples e organizada, composta por uma etapa de inicialização do hardware e um laço principal responsável pelo monitoramento contínuo do sensor.
 
-## Fluxo principal
-
+Fluxo principal
 1. Inicialização do ESP32.
-2. Configuração dos pinos GPIO do sensor HX711.
-3. Tentativa de execução da tara do sensor.
-4. Exibição da mensagem de inicialização.
-5. Entrada em um loop infinito para monitoramento do peso.
+2. Configuração dos pinos do sensor HX711.
+3. Inicialização do conversor HX711 e execução da tara (quando disponível).
+4. Exibição da mensagem de inicialização do sistema.
+5. Entrada no laço principal de monitoramento.
 
-Durante cada iteração do loop:
-
-* é realizada uma leitura do sensor HX711;
-* o valor recebido é validado;
-* o peso é comparado com os limites definidos;
-* o estado do estoque é atualizado;
-* uma mensagem é enviada ao monitor serial quando ocorre mudança de estado.
-
-Foi utilizado um pequeno atraso de 100 ms entre as leituras para reduzir o uso da CPU sem comprometer a resposta do sistema.
-
-### Fluxo lógico
-
-```text
-Inicialização
-      │
-      ▼
-Configuração do HX711
-      │
-      ▼
-Leitura do Peso
-      │
-      ▼
-┌──────── Peso = 0 ? ─────────┐
-│            Sim              │
-│      Alerta de erro         │
-└────────────┬────────────────┘
-             │Não
-             ▼
- Peso ≤ 150 g ?
-      │
- ┌────┴────┐
- │   Sim   │
- │Repor caixa
- └────┬────┘
-      │Não
-      ▼
- Peso ≥ 5000 g
- e reposição ativa?
-      │
- ┌────┴────┐
- │   Sim   │
- │Abastecimento
- └────┬────┘
-      │Não
-      ▼
-Estoque Regular
-      │
-      ▼
-Nova leitura
-```
+Durante cada ciclo do programa:
+- é realizada a leitura do peso da caixa;
+- o valor é validado para identificar possíveis erros;
+- o peso é comparado com os limites definidos;
+- o estado do estoque é atualizado;
+- uma mensagem é enviada ao monitor serial somente quando ocorre alteração de estado.
 
 ---
 
 # Componentes Utilizados na Simulação
 
-O circuito desenvolvido no Wokwi é composto pelos seguintes componentes:
+Componentes Utilizados na Simulação
 
-* **ESP32 DevKit C v4**
+O circuito desenvolvido no Wokwi utiliza os seguintes componentes:
 
-  * Microcontrolador responsável pela execução do firmware.
+**ESP32 DevKit C v4**
+Responsável pela execução do firmware e processamento das leituras.
 
-* **Sensor de peso HX711**
+**Sensor de peso HX711**
+Realiza a aquisição dos valores provenientes da célula de carga simulada.
 
-  * Responsável pela leitura da carga aplicada à célula de carga simulada.
-
-* **Monitor Serial**
-
-  * Utilizado para exibição das mensagens de status e validação automática pela esteira de testes.
+**Monitor Serial**
+Exibe as mensagens de status utilizadas tanto pelo usuário quanto pela validação automática da esteira de integração contínua.
 
 ### Conexões principais
 
-| Componente | GPIO ESP32 |
-| ---------- | ---------- |
-| HX711 DT   | GPIO 5     |
-| HX711 SCK  | GPIO 18    |
-| HX711 VCC  | 3.3 V      |
-| HX711 GND  | GND        |
+| Componente | ESP32   |
+| ---------- | ------- |
+| HX711 DT   | GPIO 5  |
+| HX711 SCK  | GPIO 18 |
+| HX711 VCC  | 3,3 V   |
+| HX711 GND  | GND     |
 
 ---
 
@@ -385,31 +337,31 @@ O circuito desenvolvido no Wokwi é composto pelos seguintes componentes:
 
 Durante o desenvolvimento foram adotadas algumas decisões visando simplicidade, robustez e facilidade de manutenção.
 
-* Organização do código em blocos bem definidos (configuração, inicialização, funções e loop principal).
-* Utilização de constantes para todos os limites de peso, facilitando futuras alterações.
-* Implementação da função `ler_peso()` para encapsular a leitura do HX711 e tratar possíveis exceções.
-* Tratamento de valores negativos retornando zero, evitando leituras inválidas.
-* Utilização de uma variável de controle (`reposicao_disparada`) para impedir múltiplos disparos consecutivos do evento de reposição.
-* Uso da variável `ultima_mensagem` para evitar repetição contínua das mesmas mensagens no monitor serial.
-* Adoção de um pequeno atraso (`time.sleep_ms(100)`) para reduzir o consumo de processamento mantendo o sistema responsivo.
+Durante o desenvolvimento foram adotadas algumas decisões para tornar o firmware mais organizado, confiável e de fácil manutenção.
+
+- Separação do código em blocos de configuração, inicialização, funções auxiliares e laço principal.
+- Definição dos limites de operação utilizando constantes, facilitando futuras alterações.
+- Implementação da função `ler_peso()` para centralizar a leitura do sensor e o tratamento de exceções.
+- Tratamento de leituras inválidas ou negativas, evitando interpretações incorretas do estado do estoque.
+- Utilização da variável `reposicao_disparada` para impedir múltiplos disparos consecutivos do evento de reposição.
+- Utilização da variável `ultima_mensagem` para evitar o envio repetitivo da mesma mensagem ao monitor serial.
+- Implementação de um laço principal não bloqueante, contendo apenas um pequeno atraso de 100 ms, garantindo - compatibilidade com os testes automatizados do Wokwi CI.
 
 ---
 
 # Resultados Obtidos
 
-O sistema desenvolvido atende aos requisitos propostos para o desafio.
+Foram implementadas corretamente as funcionalidades de:
 
-Na simulação foi possível observar corretamente:
+- inicialização do sistema;
+- leitura contínua do sensor de peso;
+- identificação do estado de estoque regular;
+- detecção automática de estoque crítico;
+- disparo único do evento de reposição;
+- reconhecimento do reabastecimento da caixa;
+- detecção de falha de leitura ou ausência da caixa quando o peso é igual a zero.
 
-* inicialização do sistema;
-* monitoramento contínuo do peso;
-* identificação do estado de estoque regular;
-* detecção automática de estoque crítico;
-* disparo único do evento de reposição;
-* reconhecimento do reabastecimento da caixa;
-* identificação de falha de leitura ou ausência da caixa quando o peso é igual a zero.
-
-As mensagens enviadas ao monitor serial seguem exatamente o formato especificado pelo desafio, permitindo compatibilidade com a validação automática da esteira de integração contínua (Wokwi CI).
+As mensagens exibidas no monitor serial seguem o formato especificado pelo desafio, permitindo a validação automática da solução durante a execução da simulação no ambiente Wokwi.
 
 ---
 
