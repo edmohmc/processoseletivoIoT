@@ -272,14 +272,14 @@ Preencha todas as seções abaixo de forma **clara, objetiva e técnica**.
 
 ---
 
-# Identificação do Candidato
+## Identificação do Candidato
 
 * **Nome completo:** Edmo Henrique Martins Cavalcante
 * **GitHub:** https://github.com/edmohmc
 
 ---
 
-# Visão Geral da Solução
+## Visão Geral da Solução
 
 O projeto consiste em um sistema embarcado para monitoramento inteligente de estoque utilizando o conceito Kanban, empregando um ESP32 e um sensor de peso HX711. O objetivo da solução é monitorar continuamente o peso de uma caixa de componentes e identificar automaticamente seu estado operacional, auxiliando no processo de reposição de materiais.
 
@@ -287,45 +287,40 @@ O sistema realiza a leitura do sensor de peso, interpreta o estado do estoque e 
 
 ---
 
-# Arquitetura do Sistema Embarcado
+## Arquitetura do Sistema Embarcado
 
 A aplicação foi estruturada de forma modular, separando configuração do hardware, inicialização, leitura do sensor e processamento da lógica de controle.
 
 O fluxo de execução ocorre da seguinte forma:
-1. Inicialização do ESP32.
-2. Configuração dos pinos GPIO utilizados pelo HX711.
-3. Inicialização do conversor HX711 e execução da tara (quando suportada pela biblioteca).
-4. Impressão da mensagem de inicialização do sistema.
-5. Entrada em um laço infinito responsável pelo monitoramento contínuo do peso.
+1. Inicialização do ESP32
+2. Configuração dos pinos GPIO utilizados pelo HX711
+3. Inicialização do conversor HX711 e execução da tara (quando suportada pela biblioteca)
+4. Impressão da mensagem de inicialização do sistema
+5. Entrada em um laço infinito responsável pelo monitoramento contínuo do peso
 
 Durante cada iteração do laço principal:
-- é realizada uma leitura do sensor;
-- o valor obtido é validado;
-- o estado do estoque é determinado;
-- caso haja mudança de estado, uma nova mensagem é enviada ao monitor serial;
-- o sistema aguarda 100 ms antes de realizar uma nova leitura.
+- É realizada uma leitura do sensor
+- O valor obtido é validado
+- O estado do estoque é determinado
+- Caso haja mudança de estado, uma nova mensagem é enviada ao monitor serial
+- O sistema aguarda 100 ms antes de realizar uma nova leitura
 
 ---
 
-# Componentes Utilizados na Simulação
-
-Componentes Utilizados na Simulação
+## Componentes Utilizados na Simulação
 
 O circuito desenvolvido no Wokwi utiliza os seguintes componentes:
 
-**ESP32 DevKit C v4**
-Responsável pela execução do firmware e processamento das leituras.
+**ESP32 DevKit C v4** responsável pela execução do firmware e processamento das leituras
 
-**Sensor de peso HX711**
-Realiza a aquisição dos valores provenientes da célula de carga simulada.
+**Sensor de peso HX711** que realiza a aquisição dos valores provenientes da célula de carga simulada
 
-**Monitor Serial**
-Exibe as mensagens de status utilizadas tanto pelo usuário quanto pela validação automática da esteira de integração contínua.
+**Monitor Serial** que exibe as mensagens de status utilizadas tanto pelo usuário quanto pela validação automática da esteira de integração contínua
 
-### Conexões principais
+### Conexões Principais
 
 | Componente | ESP32   |
-| ---------- | ------- |
+|:-----------|:--------|
 | HX711 DT   | GPIO 5  |
 | HX711 SCK  | GPIO 18 |
 | HX711 VCC  | 3,3 V   |
@@ -333,37 +328,50 @@ Exibe as mensagens de status utilizadas tanto pelo usuário quanto pela validaç
 
 ---
 
-# Decisões Técnicas Relevantes
+## Decisões Técnicas Relevantes
 
-Durante o desenvolvimento foram adotadas decisões visando organização, clareza e facilidade de manutenção do código.
+Durante o desenvolvimento foram adotadas decisões visando organização, clareza e facilidade de manutenção do código:
 
-- Separação do firmware em blocos de configuração, inicialização, funções auxiliares e laço principal.
-- Definição de constantes para todos os limites operacionais do sistema.
-- Encapsulamento da leitura do sensor na função `ler_peso()`, concentrando o tratamento de exceções.
-- Utilização das variáveis `reposicao_disparada` e `ultima_mensagem` para controlar a máquina de estados e evitar mensagens repetidas.
-- Utilização de um pequeno atraso (`time.sleep_ms(100)`) para reduzir o consumo de processamento sem comprometer a resposta do sistema.
-- Desenvolvimento de uma lógica baseada em eventos, permitindo que apenas alterações de estado sejam registradas no monitor serial.
+- **Separação modular:** Divisão do firmware em blocos de configuração, inicialização, funções auxiliares e laço principal
+- **Constantes do sistema:** Definição de constantes para todos os limites operacionais, facilitando ajustes futuros
+- **Encapsulamento de leitura:** Função `ler_peso()` dedica que concentra o tratamento de exceções
+- **Controle de estado:** Variáveis `reposicao_disparada` e `ultima_mensagem` para evitar mensagens repetidas
+- **Otimização de processamento:** Pequeno atraso (`time.sleep_ms(100)`) reduz consumo sem comprometer a resposta
+- **Lógica baseada em eventos:** Apenas alterações de estado são registradas no monitor serial
 
 ---
 
-# Resultados Obtidos
+## Resultados Obtidos
 
-O firmware desenvolvido foi executado com sucesso no ambiente Wokwi, permitindo a inicialização correta do ESP32, a comunicação com o sensor HX711 e a execução da lógica de monitoramento do estoque.
+O firmware desenvolvido foi executado com sucesso no ambiente Wokwi, permitindo:
 
-Durante os testes automatizados observou-se o correto funcionamento da inicialização do sistema, da leitura contínua do sensor, da detecção dos estados de estoque e da emissão das mensagens previstas para cada condição operacional. O projeto também respondeu aos estímulos configurados nos cenários de teste, demonstrando a implementação da lógica de reposição e de reabastecimento.
+- Inicialização correta do ESP32
+- Comunicação estabelecida com o sensor HX711
+- Execução da lógica de monitoramento do estoque
 
-Entretanto, durante a validação automática verificou-se uma limitação relacionada à biblioteca utilizada para o sensor HX711. A biblioteca empregada retorna os valores brutos do conversor analógico-digital (ADC), enquanto os cenários automatizados esperam diretamente valores calibrados em gramas. Como consequência, algumas leituras apresentaram valores elevados e incompatíveis com os pesos esperados pelo ambiente de testes, impedindo a aprovação completa de todos os cenários da esteira de integração contínua.
+Durante os testes automatizados observou-se:
+- Correto funcionamento da inicialização do sistema
+- Leitura contínua do sensor
+- Detecção dos estados de estoque
+- Emissão das mensagens previstas para cada condição operacional
+- Resposta adequada aos estímulos dos cenários de teste
+
+**Limitação identificada:** A biblioteca utilizada para o sensor HX711 retorna valores brutos do conversor analógico-digital (ADC), enquanto os cenários automatizados esperam valores calibrados em gramas. Como consequência, algumas leituras apresentaram incompatibilidades com os pesos esperados no ambiente de testes.
 
 Apesar dessa limitação, a estrutura do firmware, a máquina de estados e a lógica de controle implementadas permaneceram compatíveis com os requisitos definidos para o projeto.
 
 ---
 
-# Comentários Adicionais
+## Comentários Adicionais
 
-O desenvolvimento deste projeto permitiu aplicar conceitos de sistemas embarcados utilizando MicroPython, integração entre hardware e software e simulação virtual com o Wokwi.
+O desenvolvimento deste projeto permitiu aplicar conceitos fundamentais de sistemas embarcados utilizando MicroPython, integração entre hardware e software e simulação virtual com o Wokwi.
 
-A principal dificuldade encontrada foi a compatibilidade entre a biblioteca genérica do HX711 e o ambiente de testes automatizados, que utiliza uma representação específica das leituras do sensor. Essa diferença de implementação impactou diretamente os valores recebidos pelo firmware durante a execução dos testes.
+**Principais aprendizados:**
+- Integração prática entre simulação e hardware real
+- Importância da padronização de mensagens em sistemas validados automaticamente
+- Desafios na compatibilidade entre bibliotecas genéricas e ambientes de teste específicos
 
+**Dificuldade principal:** A compatibilidade entre a biblioteca genérica do HX711 e o ambiente de testes automatizados, que utiliza uma representação específica das leituras do sensor. Essa diferença de implementação impactou diretamente os valores recebidos pelo firmware durante a execução dos testes.
 
 ---
 
