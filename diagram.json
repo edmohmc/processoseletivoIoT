@@ -14,10 +14,7 @@
       "type": "wokwi-hx711",
       "id": "hx711",
       "top": -20,
-      "left": 270,
-      "attrs": {
-        "load": "5000"
-      }
+      "left": 270
     }
   ],
   "connections": [
